@@ -1,6 +1,4 @@
 import random
-from select import kevent
-from string import whitespace
 from time import sleep
 import pygame
 pygame.init()

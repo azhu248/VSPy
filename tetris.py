@@ -1,9 +1,9 @@
 #TETRIS 
+#TODO: multi input (timing), color, kicktable, ghost
 from audioop import add
 import math
 import copy
 import random
-from turtle import clear
 import pygame
 pygame.init()
 pygame.key.set_repeat(200, 50)
@@ -14,6 +14,8 @@ frame_blocks = []
 active_blocks = []
 placed_blocks = []
 frame_blocks = []
+next_blocks = []
+next_block_id = 0
 rotation = 0 # 1 is one cw 2 is 180 3 is one ccw
 score = 0
 for x in range(10):
@@ -27,6 +29,16 @@ block_list = [0, 1, 2, 3, 4, 5, 6]
 blankbox = pygame.image.load("newbox.png")
 filledbox = pygame.image.load("filledbox.png")
 placedbox = pygame.image.load("placedblock.png")
+x = random.randrange(len(block_list))
+block_id = block_list.pop(x)
+match block_id:
+    case 0: active_blocks = [[4, -1], [5, -1], [6, -1], [7, -1], [5.5, -1.5]] #line
+    case 1: active_blocks = [[5, -1], [5, -2], [6, -1], [6, -2]] #square
+    case 2: active_blocks = [[4, -1], [4, -2], [5, -1], [6, -1]] #j piece
+    case 3: active_blocks = [[4, -1], [6, -1], [5, -1], [6, -2]] #l piece
+    case 4: active_blocks = [[4, -1], [5, -2], [5, -1], [6, -2]] #s piece
+    case 5: active_blocks = [[4, -2], [5, -2], [5, -1], [6, -1]] #z piece
+    case 6: active_blocks = [[4, -1], [5, -2], [5, -1], [6, -1]] #t piece
 for x in range(10):
     for y in range(20):
         dis.blit(blankbox, (x * 35, y * 35))
@@ -52,14 +64,19 @@ def check_line():
             if block[1] < row:
                 block[1] += 1
 def ui():
-    blank = pygame.draw.rect(dis, (0, 0, 0), pygame.Rect(350, 0, 350, 700))
+    # blank = pygame.draw.rect(dis, (0, 0, 0), pygame.Rect(350, 0, 350, 700))
     score_font = pygame.font.SysFont('freesansbold', 50)
+    next_surface = score_font.render("Next Block", True, (255, 255, 255))
     score_surface = score_font.render("Score: " + str(score), True, (255, 255, 255))
+    next_rect = next_surface.get_rect()
     score_rect = score_surface.get_rect()
-    score_rect.center = (600, 150)
+    next_rect.center = (600, 100)
+    score_rect.center = (600, 500)
     dis.blit(score_surface, score_rect)
+    dis.blit(next_surface, next_rect)
 
 def clearboard():
+    pygame.draw.rect(dis, (0, 0, 0), pygame.Rect(350, 0, 350, 700))
     for x in range(10):
         for y in range(20):
             dis.blit(blankbox, (x * 35, y * 35))
@@ -68,17 +85,19 @@ def printboard():
         dis.blit(placedbox, (block[0] * 35, block[1] * 35))
     for block in active_blocks[0:4]:
         dis.blit(filledbox, (block[0] * 35, block[1] * 35))
-def makeblock():
-    global active_blocks
-    global block_id
-    global rotation
+    for block in next_blocks[0:4]:
+        dis.blit(filledbox, (block[0] * 35 + 400, block[1] * 35 + 200))
+
+def make_next_block():
+    global next_blocks
     global block_list
+    global next_block_id
     if len(block_list) == 0:
         block_list = [0, 1, 2, 3, 4, 5, 6]
     x = random.randrange(len(block_list))
-    block_id = block_list.pop(x)
-    print(block_list, block_id)
-    match block_id:
+    next_block_id = block_list.pop(x)
+    print(f"next: {next_block_id}")
+    match next_block_id:
         case 0: gen_block = [[4, -1], [5, -1], [6, -1], [7, -1], [5.5, -1.5]] #line
         case 1: gen_block = [[5, -1], [5, -2], [6, -1], [6, -2]] #square
         case 2: gen_block = [[4, -1], [4, -2], [5, -1], [6, -1]] #j piece
@@ -86,8 +105,21 @@ def makeblock():
         case 4: gen_block = [[4, -1], [5, -2], [5, -1], [6, -2]] #s piece
         case 5: gen_block = [[4, -2], [5, -2], [5, -1], [6, -1]] #z piece
         case 6: gen_block = [[4, -1], [5, -2], [5, -1], [6, -1]] #t piece
-    active_blocks = gen_block.copy()
+    next_blocks = gen_block.copy()
+    
+def makeblock():
+    global active_blocks
+    global block_id
+    global rotation
+    global block_list
+    global next_block_id
+    active_blocks = next_blocks.copy()
+    block_id = next_block_id
+    print(block_list, block_id)
+
+    make_next_block()
     rotation = 0
+
 def rotate_block(theta): 
     global active_blocks
     global rotation
@@ -108,16 +140,6 @@ def rotate_block(theta):
             active_blocks[coord[0]][0] = round(origin[0] + x_prime, 1)
             active_blocks[coord[0]][1] = round(origin[1] + y_prime, 1)
     if kick_table_veto() == True:
-        # if block_id != 0 and block_id != 1:
-        #     for coord in active_blocks:
-        #         coord[0] -= 1
-        #     if kick_table_veto():
-        #         for coord in active_blocks:
-        #             coord[1] -= 1
-        #         if kick_table_veto():
-        #             for coord in active_blocks:
-        #                 coord[0] += 1
-        #                 coord[1] += 3
         if not kick_table(theta):
             active_blocks = pre_rotate_blocks.copy()
             veto = True
@@ -230,31 +252,31 @@ def solidify_blocks():
                 placed_blocks = placed_blocks + active_blocks[0:4].copy()
                 active_blocks.clear()
                 makeblock()
-makeblock()
+make_next_block()
 dropcond = 0
 while not game_over:
 
-    ui()
     clearboard()
+    ui()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_over = True
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                moveblock_side(1)
-            if event.key == pygame.K_LEFT:
-                moveblock_side(0)
-            if event.key == pygame.K_DOWN:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RIGHT]:
+            moveblock_side(1)
+        if keys[pygame.K_LEFT]:
+            moveblock_side(0)
+        if keys[pygame.K_DOWN]:
+            moveblock_down()
+        if keys[pygame.K_SPACE]:
+            for x in range(22):
                 moveblock_down()
-            if event.key == pygame.K_SPACE:
-                for x in range(22):
-                    moveblock_down()
-                solidify_blocks()
-                check_line()
-            if event.key == pygame.K_UP:
-                rotate_block(math.pi/2)
-            if event.key == pygame.K_z:
-                rotate_block(-1 * math.pi/2)
+            solidify_blocks()
+            check_line()
+        if keys[pygame.K_UP]:
+            rotate_block(math.pi/2)
+        if keys[pygame.K_z]:
+            rotate_block(-1 * math.pi/2)
 
 
    
