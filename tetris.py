@@ -254,17 +254,25 @@ def solidify_blocks():
                 makeblock()
 make_next_block()
 dropcond = 0
-space_cd = 0
-up_cd = 0
-z_cd = 0
+can_up = True
+can_z = True
+can_space = True
+#probably remove cd entirely, make it only on unique button down presses?
 while not game_over:
 
     clearboard()
     ui()
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == pygame.QUIT:   
             game_over = True
         keys = pygame.key.get_pressed()
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                can_space = True
+            if event.key == pygame.K_UP:
+                can_up = True
+            if event.key == pygame.K_z:
+                can_z = True
         if keys[pygame.K_RIGHT]:
             moveblock_side(1)
         if keys[pygame.K_LEFT]:
@@ -272,22 +280,19 @@ while not game_over:
         if keys[pygame.K_DOWN]:
             moveblock_down()
         if keys[pygame.K_SPACE]:
-            space_check = pygame.time.get_ticks()
-            if space_check - space_cd > 500:
-                space_cd = space_check
+            if can_space == True:
+                can_space = False
                 for x in range(22):
                     moveblock_down()
                 solidify_blocks()
                 check_line()
         if keys[pygame.K_UP]:
-            up_check = pygame.time.get_ticks()
-            if up_check - up_cd > 50:
-                up_cd = up_check
+            if can_up == True:
+                can_up = False
                 rotate_block(math.pi/2)
         if keys[pygame.K_z]:
-            z_check = pygame.time.get_ticks()
-            if z_check - z_cd > 50:
-                z_cd = z_check
+            if can_z == True:
+                can_z = False
                 rotate_block(-1 * math.pi/2)
                         
 
