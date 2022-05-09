@@ -28,6 +28,7 @@ block_list = [0, 1, 2, 3, 4, 5, 6]
 blankbox = pygame.image.load("newbox.png")
 filledbox = pygame.image.load("filledbox.png")
 placedbox = pygame.image.load("placedblock.png")
+bluebox = pygame.image.load("bluebox.png")
 x = random.randrange(len(block_list))
 block_id = block_list.pop(x)
 match block_id:
@@ -302,4 +303,4 @@ while not game_over:
     printboard()
     pygame.display.update()
 pygame.quit()
-quit()# stuff-i-made
+quit()
