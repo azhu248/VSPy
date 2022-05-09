@@ -3,6 +3,7 @@
 import math
 import copy
 import random
+from socket import gethostbyaddr
 import pygame
 pygame.init()
 pygame.key.set_repeat(200, 50)
@@ -15,6 +16,7 @@ placed_blocks = []
 frame_blocks = []
 next_blocks = []
 next_block_id = 0
+ghost_blocks = []
 rotation = 0 # 1 is one cw 2 is 180 3 is one ccw
 score = 0
 for x in range(10):
@@ -29,6 +31,8 @@ blankbox = pygame.image.load("newbox.png")
 filledbox = pygame.image.load("filledbox.png")
 placedbox = pygame.image.load("placedblock.png")
 bluebox = pygame.image.load("bluebox.png")
+ghostbox = pygame.image.load("filledbox.png")
+ghostbox.set_alpha(80)
 x = random.randrange(len(block_list))
 block_id = block_list.pop(x)
 match block_id:
@@ -63,6 +67,25 @@ def check_line():
         for block in placed_blocks:
             if block[1] < row:
                 block[1] += 1
+def ghost():
+    global ghost_blocks
+    ghost_blocks = copy.deepcopy(active_blocks)
+    veto = False
+    for x in range(20):
+        for placedblock in placed_blocks:
+            for block in ghost_blocks:
+                if block[1] + 1 == placedblock[1] and block[0] == placedblock[0]:
+                    veto = True
+        for placedblock in frame_blocks:
+            for block in ghost_blocks:
+                if block[1] + 1 == placedblock[1] and block[0] == placedblock[0]:
+                    veto = True
+        if not veto:
+            for block in range(5):
+                try:
+                    ghost_blocks[block][1] += 1
+                except Exception:
+                    pass
 def ui():
     # blank = pygame.draw.rect(dis, (0, 0, 0), pygame.Rect(350, 0, 350, 700))
     score_font = pygame.font.SysFont('freesansbold', 50)
@@ -87,6 +110,8 @@ def printboard():
         dis.blit(filledbox, (block[0] * 35, block[1] * 35))
     for block in next_blocks[0:4]:
         dis.blit(filledbox, (block[0] * 35 + 400, block[1] * 35 + 200))
+    for block in ghost_blocks[0:4]:
+        dis.blit(ghostbox, (block[0] * 35, block[1] * 35))
 
 def make_next_block():
     global next_blocks
@@ -262,6 +287,7 @@ while not game_over:
 
     clearboard()
     ui()
+    ghost()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:   
             game_over = True
