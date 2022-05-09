@@ -1,6 +1,5 @@
 #TETRIS 
-#TODO: multi input (timing), color, kicktable, ghost
-from audioop import add
+#TODO: color, kicktable, ghost
 import math
 import copy
 import random
@@ -254,6 +253,9 @@ def solidify_blocks():
                 makeblock()
 make_next_block()
 dropcond = 0
+space_cd = 0
+up_cd = 0
+z_cd = 0
 while not game_over:
 
     clearboard()
@@ -269,15 +271,24 @@ while not game_over:
         if keys[pygame.K_DOWN]:
             moveblock_down()
         if keys[pygame.K_SPACE]:
-            for x in range(22):
-                moveblock_down()
-            solidify_blocks()
-            check_line()
+            space_check = pygame.time.get_ticks()
+            if space_check - space_cd > 500:
+                space_cd = space_check
+                for x in range(22):
+                    moveblock_down()
+                solidify_blocks()
+                check_line()
         if keys[pygame.K_UP]:
-            rotate_block(math.pi/2)
+            up_check = pygame.time.get_ticks()
+            if up_check - up_cd > 50:
+                up_cd = up_check
+                rotate_block(math.pi/2)
         if keys[pygame.K_z]:
-            rotate_block(-1 * math.pi/2)
-
+            z_check = pygame.time.get_ticks()
+            if z_check - z_cd > 50:
+                z_cd = z_check
+                rotate_block(-1 * math.pi/2)
+                        
 
    
     dropcond += 1
